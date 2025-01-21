@@ -1,29 +1,33 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-
-// router
-const product = require('./routers/product')
-
+const mysql = require('mysql2/promise');
+const { readdirSync } = require('fs');
 dotenv.config();
 
-const PORT = process.env.PORT;
 const app = express();
 
 app.use(express.json());
 app.use(cors());
 
-app.get('/', (req, res) => {
-    res.status(200).json({
-        msg: "This is my api running..."
-    })
+const db = mysql.createPool({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASS,
+    database: process.env.DB_NAME,
+    port: process.env.DB_PORT,
+});
+
+global.db = db;
+
+readdirSync('./routes').map((item) => {
+    app.use('/api', require('./routes/' + item))
 })
 
-// API PRODUCT 
-app.use('/api', product);
 
-app.listen(PORT, () => {
-    console.log(`server listening on ${PORT}`);
-})
+app.listen(process.env.PORT, () => {
+    console.log(`server listening on port: ${process.env.PORT}`)
+});
+
 
 
